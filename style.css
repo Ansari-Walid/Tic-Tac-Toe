@@ -69,7 +69,6 @@ body {
 }
 
 .turn p {
-  color: var(--yellow);
   font-size: 14px;
   animation: 0.6s ease-in-out turn-text-animation;
 }

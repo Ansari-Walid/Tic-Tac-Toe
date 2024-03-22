@@ -14,13 +14,14 @@
     <main>
       <div class="container">
         <!-- Turn Indicator -->
-        <div class="turn">
-          <i class="fa-solid fa-x turquoise"></i>
-          <p>Player 1 - Turn</p>
+        <div class="turn" data-id="turn">
+          <i class="fa-solid fa-x yellow"></i>
+          <p class="yellow">Player1 : You,re Turn</p>
         </div>
+
         <!-- Dropdown Mwnu -->
         <div class="actions" data-id="actions">
-          <button class="action-btn" data-id=" action-button">
+          <button class="action-btn" data-id="action-button">
             Actions
             <i class="fa-solid fa-chevron-down"></i>
           </button>
@@ -29,6 +30,7 @@
             <button data-id="newgame">New Round</button>
           </div>
         </div>
+
         <!-- Game Squares -->
         <div id="1" class="square shadow" data-id="square"></div>
         <div id="2" class="square shadow" data-id="square"></div>
@@ -62,6 +64,6 @@
         <button data-id="modal-button">Play again</button>
       </div>
     </div>
-    <script src="script.js"></script>
+    <script type="module" src="./JS/app.js"></script>
   </body>
 </html>
