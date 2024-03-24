@@ -1,11 +1,32 @@
 const initialValue = {
   moves: [],
+  history: {
+    currentRoundGame: [],
+    allGames: [],
+  },
 };
 export default class Store {
-  #state = initialValue;
-
-  constructor(player) {
+  constructor(key, player) {
+    this.storageKey = key;
     this.player = player;
+  }
+
+  get stats() {
+    const state = this.#getGameState();
+    return {
+      playerWithStats: this.player.map((p) => {
+        const wins = state.history.currentRoundGame.filter(
+          (game) => game.status.winner?.id === p.id
+        ).length;
+        return {
+          ...p,
+          wins,
+        };
+      }),
+      ties: state.history.currentRoundGame.filter(
+        (game) => game.status.winner === null
+      ).length,
+    };
   }
 
   get game() {
@@ -48,8 +69,7 @@ export default class Store {
   }
 
   playerMove(squareId) {
-    const state = this.#getGameState();
-    const stateClone = structuredClone(state);
+    const stateClone = structuredClone(this.#getGameState());
     stateClone.moves.push({
       squareId,
       player: this.game.currentPlayer,
@@ -58,11 +78,26 @@ export default class Store {
   }
 
   reset() {
-    this.#saveGameState(initialValue);
+    const stateClone = structuredClone(this.#getGameState());
+    const { status, moves } = this.game;
+    if (status.isComplete) {
+      stateClone.history.currentRoundGame.push({
+        moves,
+        status,
+      });
+    }
+    stateClone.moves = [];
+    this.#saveGameState(stateClone);
   }
 
-  #getGameState() {
-    return this.#state;
+  newRound() {
+    this.reset();
+
+    const stateClone = structuredClone(this.#getGameState());
+    stateClone.history.allGames.push(...stateClone.history.currentRoundGame);
+    stateClone.history.currentRoundGame = [];
+
+    this.#saveGameState(stateClone);
   }
 
   #saveGameState(stateOrFn) {
@@ -78,6 +113,10 @@ export default class Store {
       default:
         throw new Error("Invalid Argument");
     }
-    this.#state = newState;
+    window.localStorage.setItem(this.storageKey, JSON.stringify(newState));
+  }
+  #getGameState() {
+    const item = window.localStorage.getItem(this.storageKey);
+    return item ? JSON.parse(item) : initialValue;
   }
 }

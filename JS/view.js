@@ -11,6 +11,9 @@ export default class View {
     this.$.modalText = this.#qs('[data-id="modal-text"]');
     this.$.modalButton = this.#qs('[data-id="modal-button"]');
     this.$.turn = this.#qs('[data-id="turn"]');
+    this.$.p1Wins = this.#qs('[data-id="p1-wins"]');
+    this.$.p2Wins = this.#qs('[data-id="p2-wins"]');
+    this.$.ties = this.#qs('[data-id="ties"]');
 
     this.$$.squares = this.#qsAll('[data-id="square"]');
 
@@ -24,6 +27,11 @@ export default class View {
   /**
    *Register All Event Listeners
    */
+  updateScoreboard(p1Wins, p2Wins, ties) {
+    this.$.p1Wins.innerText = `${p1Wins} wins`;
+    this.$.p2Wins.innerText = `${p2Wins} wins`;
+    this.$.ties.innerText = `${ties} ties `;
+  }
 
   bindGameResetEvent(handler) {
     this.$.reset.addEventListener("click", handler);
@@ -45,11 +53,23 @@ export default class View {
     this.$.modal.classList.remove("hidden");
     this.$.modalText.innerText = msg;
   }
-  closeModel() {
+  #closeModel() {
     this.$.modal.classList.add("hidden");
+  }
+  closeAll() {
+    this.#closeModel();
+    this.#closeMenu();
   }
   clearMoves() {
     this.$$.squares.forEach((square) => square.replaceChildren());
+  }
+  #closeMenu() {
+    this.$.items.classList.add("hidden");
+    this.$.actionsButton.classList.remove("border");
+
+    const icon = this.$.actionsButton.querySelector("i");
+    icon.classList.add("fa-chevron-down");
+    icon.classList.remove("fa-chevron-up");
   }
   #toggleMenu() {
     this.$.items.classList.toggle("hidden");
@@ -64,6 +84,15 @@ export default class View {
     const icon = document.createElement("i");
     icon.classList.add("fa-solid", player.iconClass, player.colorClass);
     squareEl.replaceChildren(icon);
+  }
+  initializeMoves(moves) {
+    this.$$.squares.forEach((square) => {
+      const existingMove = moves.find((move) => move.squareId === +square.id);
+
+      if (existingMove) {
+        this.handlePlayerMove(square, existingMove.player);
+      }
+    });
   }
 
   setTurnIndicator(player) {

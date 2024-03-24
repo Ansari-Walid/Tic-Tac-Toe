@@ -17,25 +17,42 @@ const player = [
 ];
 
 function init() {
+  const store = new Store("live-storage-key", player);
   const view = new View();
-  const store = new Store(player);
 
-  view.bindGameResetEvent((event) => {
-    view.closeModel();
-    store.reset();
+  function initView() {
+    view.closeAll();
     view.clearMoves();
     view.setTurnIndicator(store.game.currentPlayer);
+
+    view.updateScoreboard(
+      store.stats.playerWithStats[0].wins,
+      store.stats.playerWithStats[1].wins,
+      store.stats.ties
+    );
+    view.initializeMoves(store.game.moves);
+  }
+
+  window.addEventListener("storage", () => {
+    initView();
+  });
+
+  initView();
+
+  view.bindGameResetEvent((event) => {
+    store.reset();
+    initView();
   });
 
   view.bindNewRoundEvent((event) => {
-    console.log("New Round");
+    store.newRound();
+    initView();
   });
 
   view.bindPlayerMoveEvent((square) => {
     const existingMove = store.game.moves.find(
       (move) => move.squareId === +square.id
     );
-
     if (existingMove) {
       return;
     }
