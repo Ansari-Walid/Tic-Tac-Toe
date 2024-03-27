@@ -1,7 +1,8 @@
 import View from "./view.js";
 import Store from "./store.js";
+import type { Player } from "./types";
 
-const player = [
+const player: Player[] = [
   {
     id: 1,
     name: "Player 1",
@@ -20,33 +21,23 @@ function init() {
   const store = new Store("live-storage-key", player);
   const view = new View();
 
-  function initView() {
-    view.closeAll();
-    view.clearMoves();
-    view.setTurnIndicator(store.game.currentPlayer);
-
-    view.updateScoreboard(
-      store.stats.playerWithStats[0].wins,
-      store.stats.playerWithStats[1].wins,
-      store.stats.ties
-    );
-    view.initializeMoves(store.game.moves);
-  }
-
-  window.addEventListener("storage", () => {
-    initView();
+  store.addEventListener("statechange", () => {
+    view.render(store.game, store.stats);
   });
 
-  initView();
+  window.addEventListener("storage", () => {
+    view.render(store.game, store.stats);
+  });
+
+  // First Load of the game
+  view.render(store.game, store.stats);
 
   view.bindGameResetEvent((event) => {
     store.reset();
-    initView();
   });
 
   view.bindNewRoundEvent((event) => {
     store.newRound();
-    initView();
   });
 
   view.bindPlayerMoveEvent((square) => {
@@ -56,19 +47,7 @@ function init() {
     if (existingMove) {
       return;
     }
-
-    view.handlePlayerMove(square, store.game.currentPlayer);
     store.playerMove(+square.id); //Advance to the next move
-
-    if (store.game.status.isComplete) {
-      view.openModel(
-        store.game.status.winner
-          ? `${store.game.status.winner.name} wins`
-          : "Tie"
-      );
-      return;
-    }
-    view.setTurnIndicator(store.game.currentPlayer);
   });
 }
 window.addEventListener("load", init);

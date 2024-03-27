@@ -1,17 +1,32 @@
-const initialValue = {
+import type { Player, GameState, Move, GameStatus } from "./types";
+type playerWithWins = Player & { wins: number };
+
+export type DerivedGame = {
+  moves: Move[];
+  currentPlayer: Player;
+  status: GameStatus;
+};
+export type derivedStats = {
+  playerWithStats: playerWithWins[];
+  ties: number;
+};
+const initialValue: GameState = {
   moves: [],
   history: {
     currentRoundGame: [],
     allGames: [],
   },
 };
-export default class Store {
-  constructor(key, player) {
-    this.storageKey = key;
-    this.player = player;
+
+export default class Store extends EventTarget {
+  constructor(
+    private readonly storageKey: string,
+    private readonly player: Player[]
+  ) {
+    super();
   }
 
-  get stats() {
+  get stats(): derivedStats {
     const state = this.#getGameState();
     return {
       playerWithStats: this.player.map((p) => {
@@ -29,7 +44,7 @@ export default class Store {
     };
   }
 
-  get game() {
+  get game(): DerivedGame {
     const state = this.#getGameState();
     const currentPlayer = this.player[state.moves.length % 2];
 
@@ -44,7 +59,7 @@ export default class Store {
       [7, 8, 9],
     ];
 
-    let winner = null;
+    let winner: Player | null = null;
 
     for (const player of this.player) {
       const selectedSquareId = state.moves
@@ -59,8 +74,8 @@ export default class Store {
     }
 
     return {
-      currentPlayer,
       moves: state.moves,
+      currentPlayer,
       status: {
         isComplete: winner !== null || state.moves.length === 9,
         winner,
@@ -68,7 +83,7 @@ export default class Store {
     };
   }
 
-  playerMove(squareId) {
+  playerMove(squareId: number) {
     const stateClone = structuredClone(this.#getGameState());
     stateClone.moves.push({
       squareId,
@@ -93,14 +108,14 @@ export default class Store {
   newRound() {
     this.reset();
 
-    const stateClone = structuredClone(this.#getGameState());
+    const stateClone = structuredClone(this.#getGameState()) as GameState;
     stateClone.history.allGames.push(...stateClone.history.currentRoundGame);
     stateClone.history.currentRoundGame = [];
 
     this.#saveGameState(stateClone);
   }
 
-  #saveGameState(stateOrFn) {
+  #saveGameState(stateOrFn: ((prev: GameState) => GameState) | GameState) {
     const prevState = this.#getGameState();
     let newState;
     switch (typeof stateOrFn) {
@@ -114,9 +129,10 @@ export default class Store {
         throw new Error("Invalid Argument");
     }
     window.localStorage.setItem(this.storageKey, JSON.stringify(newState));
+    this.dispatchEvent(new Event("statechange"));
   }
   #getGameState() {
     const item = window.localStorage.getItem(this.storageKey);
-    return item ? JSON.parse(item) : initialValue;
+    return item ? (JSON.parse(item) as GameState) : (initialValue as GameState);
   }
 }
